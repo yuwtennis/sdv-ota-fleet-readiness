@@ -1,0 +1,40 @@
+env_list = ["local", "integ"]
+
+[env_run_base]
+allowlist_externals = [
+    "ruff",
+    "terraform",
+    "gcloud",
+    "pytest"
+]
+
+skip_install = true
+
+[env.local]
+labels = ["local"]
+description = "Runs local testing"
+
+commands = [
+    ["ruff", "check", "--config", ".ruff.toml", "scripts/*.py", "sdvotafleetreadiness/"]
+]
+
+[env.integ]
+labels = ["integ"]
+description = "Runs integration testing"
+set_env = {
+    "GOOGLE_PROJECT" = "elite-caster-125113",
+    "GCLOUD_CONFIGURATION" = "default"
+}
+
+commands_pre = [
+    ["gcloud", "config", "configurations", "activate", "{env:GCLOUD_CONFIGURATION}"],
+    ["terraform", "-chdir=terraform/", "apply", "-auto-approve"]
+]
+
+commands = [
+    [ "pytest", "tests/integration" ]
+]
+
+commands_post = [
+    ["terraform", "-chdir=terraform/", "destroy", "-auto-approve"]
+]

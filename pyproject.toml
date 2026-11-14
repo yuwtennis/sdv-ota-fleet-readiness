@@ -1,0 +1,16 @@
+[project]
+name = "sdv-ota-fleet-readiness"
+version = "0.1.0"
+requires-python = ">=3.15"
+dependencies = [
+    "google-cloud-bigquery>=3.47.0",
+    "google-cloud-pubsub>=2.43.0",
+    "pydantic>=2.14.3",
+    "pytest>=9.2.0",
+    "tox>=4.67.13",
+]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.17.5",
+]
