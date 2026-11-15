@@ -3,6 +3,7 @@
 
 resource "google_bigquery_dataset" "sdv_ota_fleet_readiness" {
   dataset_id = "sdv_ota_fleet_readiness"
+  location   = var.region_name
 }
 
 resource "google_bigquery_table" "vehicle_telemetry" {
@@ -13,7 +14,7 @@ resource "google_bigquery_table" "vehicle_telemetry" {
     type  = "DAY"
     field = "timestamp"
   }
-  schema              = <<EOF
+  schema = <<EOF
 [
   {
     "name": "vehicle_id",
@@ -81,7 +82,7 @@ resource "google_bigquery_table" "vehicle_telemetry" {
 
 resource "google_bigquery_table_iam_member" "push_subscription_by_pubsub_sa" {
   dataset_id = google_bigquery_dataset.sdv_ota_fleet_readiness.dataset_id
-  member     = "serviceAccount:service-${data.google_project.project.number}@gcp-sa-pubsub.iam.gserviceaccount.com"
+  member     = "serviceAccount:service-${var.project_number}@gcp-sa-pubsub.iam.gserviceaccount.com"
   role       = "roles/bigquery.dataEditor"
   table_id   = google_bigquery_table.vehicle_telemetry.table_id
 }
@@ -99,7 +100,7 @@ resource "google_pubsub_subscription" "vehicle_state_topic_bq_sub" {
   name  = "${google_pubsub_topic.vehicle_state_topic.name}-sub"
   topic = google_pubsub_topic.vehicle_state_topic.id
   bigquery_config {
-    table = "${google_bigquery_table.vehicle_telemetry.project}.${google_bigquery_table.vehicle_telemetry.dataset_id}.${google_bigquery_table.vehicle_telemetry.table_id}"
-    use_table_schema   = true
+    table            = "${google_bigquery_table.vehicle_telemetry.project}.${google_bigquery_table.vehicle_telemetry.dataset_id}.${google_bigquery_table.vehicle_telemetry.table_id}"
+    use_table_schema = true
   }
 }
