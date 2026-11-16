@@ -82,7 +82,7 @@ resource "google_bigquery_table" "vehicle_telemetry" {
 
 resource "google_bigquery_table_iam_member" "push_subscription_by_pubsub_sa" {
   dataset_id = google_bigquery_dataset.sdv_ota_fleet_readiness.dataset_id
-  member     = "serviceAccount:service-${var.project_number}@gcp-sa-pubsub.iam.gserviceaccount.com"
+  member     = "serviceAccount:service-${var.project.number}@gcp-sa-pubsub.iam.gserviceaccount.com"
   role       = "roles/bigquery.dataEditor"
   table_id   = google_bigquery_table.vehicle_telemetry.table_id
 }

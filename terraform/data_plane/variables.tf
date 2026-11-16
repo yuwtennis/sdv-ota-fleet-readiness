@@ -13,7 +13,10 @@ variable "zone_name" {
   type        = string
 }
 
-variable "project_number" {
+variable "project" {
   description = ""
-  type        = number
+  type        = object({
+    id=string,
+    number=number
+  })
 }
