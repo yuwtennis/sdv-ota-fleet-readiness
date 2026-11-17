@@ -1,0 +1,12 @@
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-issuer
+  namespace: {{ .Values.certManager.namespace }}
+spec:
+  acme:
+    server: {{ .Values.certManager.acme.stagingServer}}
+    email: {{ .Values.certManager.acme.email }}
+    profile:  tlsserver
+    privateKeySecretRef:
+      name: letsencrypt-secret

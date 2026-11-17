@@ -1,0 +1,56 @@
+apiVersion: apps.emqx.io/v3beta1
+kind: EMQX
+metadata:
+  name: emqx
+spec:
+  image: emqx/emqx:6.3.3
+  config:
+    roots:
+      license:
+        key: "evaluation"
+      ssl:
+        default:
+          bind: "0.0.0.0:8883"
+          ssl_options:
+            cacertfile: "/mounted/cert/ca.crt"
+            certfile: "/mounted/cert/tls.crt"
+            keyfile: "/mounted/cert/tls.key"
+            gc_after_handshake: true
+            handshake_timeout: "5s"
+  coreTemplate:
+    spec:
+      resources:
+        requests:
+          cpu: "500m"
+          memory: "512Mi"
+        limits:
+          cpu: "1000m"
+          memory: "1024Mi"
+      persistentVolumeClaimSpec:
+        ## more information about storage classes: https://cloud.google.com/kubernetes-engine/docs/concepts/persistent-volumes#storageclasses
+        storageClassName: standard
+        resources:
+          requests:
+            storage: 10Gi
+        accessModes:
+          - ReadWriteOnce
+      extraVolumes:
+        - name: emqx-tls
+          secret:
+            secretName: emqx-tls
+      extraVolumeMounts:
+        - name: emqx-tls
+          mountPath: /mounted/cert
+  dashboardServiceTemplate:
+    spec:
+      ## more information about load balancer: https://cloud.google.com/kubernetes-engine/docs/how-to/internal-load-balancing
+      type: ClusterIP
+  listenersServiceTemplate:
+    spec:
+      ## more information about load balancer: https://cloud.google.com/kubernetes-engine/docs/how-to/internal-load-balancing
+      type: LoadBalancer
+      loadBalancerSourceRanges:
+        {{- range $.Values.emqxListener.loadBalancerSourceRanges }}
+        - {{ . | quote }}
+        {{- end }}
+

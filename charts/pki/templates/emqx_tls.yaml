@@ -1,0 +1,23 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: emqx-tls
+  namespace: data-plane
+spec:
+  # Secret names are always required.
+  secretName: emqx-tls
+
+  # Avoid using commonName for DNS names in end-entity (leaf) certificates. Unless you have a specific
+  # need for it in your environment, use dnsNames exclusively to avoid issues with commonName.
+  # Usually, commonName is used to give human-readable names to CA certificates and can be avoided for
+  # other certificates.
+  commonName: www.yulab.com
+  dnsNames:
+    - www.yulab.com
+
+  # Issuer references are always required.
+  issuerRef:
+    name: letsencrypt-issuer
+    # We can reference ClusterIssuers by changing the kind here.
+    # The default value is Issuer (i.e. a locally namespaced Issuer)
+    kind: ClusterIssuer

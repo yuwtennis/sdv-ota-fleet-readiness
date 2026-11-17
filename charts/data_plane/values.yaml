@@ -1,1 +1,5 @@
 replicaCount: 1
+
+emqxListener:
+  loadBalancerSourceRanges:
+    - 153.199.94.138/32
