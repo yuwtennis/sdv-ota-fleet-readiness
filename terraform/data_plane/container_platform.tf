@@ -14,6 +14,9 @@ resource "google_container_cluster" "data_pipeline" {
   }
 
   deletion_protection = false
+  workload_identity_config {
+    workload_pool = "${var.project.id}.svc.id.goog"
+  }
 }
 
 resource "google_container_node_pool" "primary_preemptible_nodes" {
@@ -30,5 +33,9 @@ resource "google_container_node_pool" "primary_preemptible_nodes" {
     oauth_scopes = [
       "https://www.googleapis.com/auth/cloud-platform"
     ]
+
+    workload_metadata_config {
+      mode = "GKE_METADATA"
+    }
   }
 }

@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mosquitto-deployment
+  labels:
+    app: mosquitto
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mosquitto
+  template:
+    metadata:
+      labels:
+        app: mosquitto
+    spec:
+      containers:
+        - name: mosquitto
+          image: eclipse-mosquitto:2.1-alpine
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - mountPath: "/mosquitto/tls"
+              name: mosquitto-tls
+              readOnly: true
+            - mountPath: "/mosquitto/config"
+              name: mosquitto-config
+              readOnly: true
+      volumes:
+        - name: mosquitto-config
+          configMap:
+            name: mosquitto-config
+        - name: mosquitto-tls
+          secret:
+            secretName: edge-data-broker-tls

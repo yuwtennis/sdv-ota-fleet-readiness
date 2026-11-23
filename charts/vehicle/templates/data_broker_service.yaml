@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: data-broker-service
+spec:
+  selector:
+    app.kubernetes.io/name: mosquitto-deployment
+  type: ClusterIP
+  ports:
+    - protocol: TCP
+      port: 1833
+      targetPort: 1833

@@ -1,6 +1,5 @@
-certManager: #defined by either the name or alias of your dependency in Chart.yaml
-  namespace: cert-manager
+issuer: #defined by either the name or alias of your dependency in Chart.yaml
   acme:
     email: "yu.w.tennis@gmail.com"
-    productionServer: "https://acme-staging-v02.api.letsencrypt.org/directory"
+    productionServer: "https://acme-v02.api.letsencrypt.org/directory"
     stagingServer: "https://acme-staging-v02.api.letsencrypt.org/directory"

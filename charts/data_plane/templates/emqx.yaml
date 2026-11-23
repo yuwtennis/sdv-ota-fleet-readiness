@@ -8,15 +8,20 @@ spec:
     roots:
       license:
         key: "evaluation"
-      ssl:
-        default:
-          bind: "0.0.0.0:8883"
-          ssl_options:
-            cacertfile: "/mounted/cert/ca.crt"
-            certfile: "/mounted/cert/tls.crt"
-            keyfile: "/mounted/cert/tls.key"
-            gc_after_handshake: true
-            handshake_timeout: "5s"
+      listeners:
+        ssl:
+          default:
+            bind: "0.0.0.0:8883"
+            ssl_options:
+              cacertfile: "/mounted/client/ca.crt"
+              certfile: "/mounted/server/tls.crt"
+              keyfile: "/mounted/server/tls.key"
+              gc_after_handshake: true
+              handshake_timeout: "5s"
+              verify: "verify_peer"
+              fail_if_no_peer_cert: true
+            mqtt:
+              peer_cert_as_clientid: cn
   coreTemplate:
     spec:
       resources:
@@ -35,12 +40,17 @@ spec:
         accessModes:
           - ReadWriteOnce
       extraVolumes:
-        - name: emqx-tls
+        - name: cloud-data-broker-tls
           secret:
-            secretName: emqx-tls
+            secretName: cloud-data-broker-tls
+        - name: vehicle-ca
+          secret:
+            secretName: vehicle-ca
       extraVolumeMounts:
-        - name: emqx-tls
-          mountPath: /mounted/cert
+        - name: cloud-data-broker-tls
+          mountPath: /mounted/server
+        - name: vehicle-ca
+          mountPath: /mounted/client
   dashboardServiceTemplate:
     spec:
       ## more information about load balancer: https://cloud.google.com/kubernetes-engine/docs/how-to/internal-load-balancing
@@ -49,6 +59,7 @@ spec:
     spec:
       ## more information about load balancer: https://cloud.google.com/kubernetes-engine/docs/how-to/internal-load-balancing
       type: LoadBalancer
+      loadBalancerIP: {{ $.Values.emqxListener.loadBalancerIP }}
       loadBalancerSourceRanges:
         {{- range $.Values.emqxListener.loadBalancerSourceRanges }}
         - {{ . | quote }}

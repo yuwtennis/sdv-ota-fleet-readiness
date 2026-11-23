@@ -16,7 +16,7 @@ module "data_plane" {
   zone_name   = "asia-northeast1-a"
   vpc_id      = google_compute_network.sdv-ota-fleet-readiness.id
   project = {
-    id     = data.google_project.project.id
+    id     = data.google_project.project.project_id
     number = data.google_project.project.number
   }
 }

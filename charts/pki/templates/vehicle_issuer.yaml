@@ -1,0 +1,26 @@
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata: { name: selfsigned, namespace: data-plane }
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata: { name: vehicle-ca, namespace: data-plane }
+spec:
+  isCA: true
+  commonName: sdv-vehicle-ca
+  secretName: vehicle-ca
+  duration: 87600h              # ten years
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+    rotationPolicy: Never
+  issuerRef: { name: selfsigned, kind: Issuer, group: cert-manager.io }
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata: { name: vehicle-ca, namespace: data-plane }
+spec:
+  ca:
+    secretName: vehicle-ca
