@@ -20,8 +20,8 @@ spec:
               handshake_timeout: "5s"
               verify: "verify_peer"
               fail_if_no_peer_cert: true
-            mqtt:
-              peer_cert_as_clientid: cn
+      mqtt:
+        peer_cert_as_clientid: cn
   coreTemplate:
     spec:
       resources:
