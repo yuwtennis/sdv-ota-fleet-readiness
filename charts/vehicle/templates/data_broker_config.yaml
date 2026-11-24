@@ -6,7 +6,8 @@ data:
   mosquitto.conf: |
     connection emqx
     address data-broker-listener.sdv.yuwlab.com:8883
-    topic status out 1 "" vehicles/vehicle-ebd0f954-082a-438d-beea-0850826d5908/
+    topic state out 1 out/ vehicles/vehicle-ebd0f954-082a-438d-beea-0850826d5908/
+    cleansession true
 
     remote_clientid vehicle-ebd0f954-082a-438d-beea-0850826d5908
     start_type automatic
@@ -16,8 +17,10 @@ data:
     allow_anonymous true
     log_timestamp_format %Y-%m-%dT%H:%M:%S
     log_type all
+    try_private true
 
-    bridge_protocol_version mqttv311
+    bridge_insecure false
+    bridge_protocol_version mqttv50
     bridge_tls_use_os_certs true
     bridge_certfile /mosquitto/tls/tls.crt
     bridge_keyfile /mosquitto/tls/tls.key
