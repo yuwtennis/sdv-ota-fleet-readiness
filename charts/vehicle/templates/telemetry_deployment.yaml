@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: telemetry-deployment
+  labels:
+    app: telemetry
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: telemetry
+  template:
+    metadata:
+      labels:
+        app: telemetry
+    spec:
+      containers:
+        - name: telemetry
+          image: asia-northeast1-docker.pkg.dev/elite-caster-125113/sdv-ota-fleet-readiness/telemetry:latest
+          command: ["uv"]
+          args: [
+            "run",
+            "python",
+            "scripts/edge-telemetry-simulator.py",
+            "--host", "data-broker-service",
+            "--mode", "mqtt"]
+          imagePullPolicy: Always
+      imagePullSecrets:
+        - name: regcred

@@ -7,6 +7,7 @@ WORKDIR /app
 
 ADD pyproject.toml .
 ADD uv.lock .
+ADD sdvotafleetreadiness/ sdvotafleetreadiness/
 ADD scripts/ scripts/
 
 RUN uv sync
