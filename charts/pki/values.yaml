@@ -3,3 +3,6 @@ issuer: #defined by either the name or alias of your dependency in Chart.yaml
     email: "yu.w.tennis@gmail.com"
     productionServer: "https://acme-v02.api.letsencrypt.org/directory"
     stagingServer: "https://acme-staging-v02.api.letsencrypt.org/directory"
+
+cloudCert:
+  dnsName: data-broker-listener.sdv.yuwlab.com

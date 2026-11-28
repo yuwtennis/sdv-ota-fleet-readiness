@@ -44,8 +44,10 @@ Use MQTT over TLS using bridging.
 
 RFC7030
 
-```markdown
-Vehicle ---> Enrollment Service ---> Cloud Data Broker
+```mermaid
+graph LR;
+    Vehicle<-->EnrollmentService; 
+    EnrollmentService<-->CloudDataBroker;
 ```
 
 ### Tech stack
@@ -79,7 +81,7 @@ xxx
 ## Deployment lifecycle
 
 ### Init
-#### Cloud setup
+#### 1.Cloud setup
 
 ```shell
 cd terraform
@@ -88,42 +90,14 @@ terraform plan
 terraform apply
 ```
 
-#### EMQX setup
+#### 2.EMQX setup
 
 ```shell
 gcloud container clusters get-credentials data-plane-cluster --zone asia-northeast1-a
-export KUBECONFIG=~/.kube/config
-
-# Operator
-helm repo add emqx https://repos.emqx.io/charts
-helm install emqx-operator emqx/emqx-operator \
-  --version 3.0.0 \
-  --namespace emqx-operator-system \
-  --create-namespace
-
-# Cert manager
-helm install \
-  cert-manager oci://quay.io/jetstack/charts/cert-manager \
-  --version v1.21.3 \
-  --namespace cert-manager \
-  --create-namespace \
-  --set crds.enabled=true \
-  --set serviceAccount.annotations."iam\.gke\.io/gcp-service-account"=dns01-solver@$(gcloud config get project).iam.gserviceaccount.com
-
-# pki
-helm install pki charts/pki \
-  --namespace data-plane \
-  --set google.project=$(gcloud config get project) \
-  -f charts/pki/values_cloud.yaml
-
-# Broker
-helm install data-plane charts/data_plane \
-  --namespace data-plane \
-  --set emqxListener.loadBalancerIP=35.243.85.63 \
-  --set emqxListener.loadBalancerSourceRanges={153.199.94.138/32}
+make deploy-cloud
 ```
 
-#### Generate and sign certificate
+#### 3.Generate and sign certificate
 
 Since there is no enrollment service, I will mimic the process.
 EMQX requires the subjectAltName to be set to the UUID of the device
@@ -132,30 +106,14 @@ Use urn to identify the device.
 # https://developer.mozilla.org/ja/docs/Web/URI/Reference/Schemes/urn
 
 ```shell
-# Generate
-openssl ecparam -out vehicle.key -name prime256v1 -genkey
-export ID="ebd0f954-082a-438d-beea-0850826d5908"
-openssl req -new -key vehicle.key \
-    -subj "/CN=vehicle-$ID" \
-    -addext "subjectAltName=URI:urn:uuid:$ID" \
-    -out vehicle.csr
+make enroll-cred
+```
 
-# Sign 
-cat <<EOF | kubectl apply -n data-plane -f -
-apiVersion: cert-manager.io/v1
-kind: CertificateRequest
-metadata: { name: vehicle-$ID, namespace: data-plane }
-spec:
-  request: $(base64 -w0 < vehicle.csr)
-  isCA: false
-  usages: [digital signature, client auth]
-  duration: 8760h
-  issuerRef: { name: vehicle-ca, kind: Issuer, group: cert-manager.io }
-EOF
+#### 4.Generate sa key
 
-# Retrieve
-kubectl get certificaterequest vehicle-$ID -n data-plane \
-  -o jsonpath='{.status.certificate}' | base64 -d > vehicle.crt
+```shell
+gcloud iam service-accounts keys create sa-key.json \
+  --iam-account data-broker-pubsub-write@$(gcloud config get project).iam.gserviceaccount.com
 ```
 
 #### Local vehicle setup
@@ -172,26 +130,34 @@ scp sdv@${IPV4_ADDR%\/*}:/etc/rancher/k3s/k3s.yaml .
 sed -i "s|127.0.0.1|${IPV4_ADDR%\/*}|"  k3s.yaml
 ```
 
-2.Deploy apps
+2. Set cred for Image pulling
+# TODO Use workload identity with k8s sa 
 ```shell
 export KUBECONFIG=k3s.yaml
-# Deploy apps
-helm install vehicle ./charts/vehicle \
-  --namespace vehicle \
-  --create-namespace \
-  --set vehicle.tls.crt=$(base64 -w0 < vehicle.crt) \
-  --set vehicle.tls.key=$(base64 -w0 < vehicle.key)
+kubectl delete secret regcred -n vehicle
+kubectl create secret docker-registry regcred -n vehicle \
+  --docker-server=asia-northeast1-docker.pkg.dev \
+  --docker-username=oauth2accesstoken \
+  --docker-password="$(gcloud auth print-access-token)"
+```
+
+2.Deploy apps
+```shell
+make deploy-vehicle
+```
+
+### Test
+
+```shell
+# Subscribe on terminal 1
+docker run --rm emqx/mqttx-cli:latest mqttx sub -t 'vehicles/vehicle-ebd0f954-082a-438d-beea-0850826d5908/state' -h data-broker-listener.sdv.yuwlab.com -p 1883
+
+# Publish on terminal 2
+kubectl exec -n vehicle mosquitto-deployment-8596fc79f6-4p4w2 -- mosquitto_pub  -h localhost -t local/state -m "test"
 ```
 
 ### Teardown
 
-#### Cloud
 ```shell
-cd terraform
-terraform destroy
-```
-
-#### Local
-```shell
-sudo sh vm-teardown.sh
+make clean-all
 ```
